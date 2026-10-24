@@ -1,1 +1,23 @@
-{% extends "base.html" %}{% block title %}Add Anime — KAIRO{% endblock %}{% block content %}<main class="auth-main wide"><div class="auth-card"><p class="eyebrow">ADMIN • CATALOGUE</p><h1>Add new anime</h1><form method="post" enctype="multipart/form-data" class="auth-form"><label>Anime title<input name="title" required placeholder="e.g. My Anime"></label><div class="form-row"><label>Genre<input name="genre" required placeholder="Action, Fantasy"></label><label>Release year<input type="number" name="year" value="2026" min="1950" max="2100"></label></div><label>Language<select name="language"><option>Hindi Dub</option><option>Hindi Sub</option><option>Japanese</option><option>English Dub</option></select></label><label>Description<textarea name="description" rows="3" placeholder="Short synopsis"></textarea></label><label>Poster image URL<input name="poster" type="url" placeholder="https://..."></label><label>Or upload poster (JPG/PNG/WebP, max 8MB)<input name="poster_file" type="file" accept=".jpg,.jpeg,.png,.webp,.gif"></label><label>Episode 1 default video URL<input name="video_url" type="url" placeholder="https://your-authorized-video.mp4"></label><label>Optional server URLs (JSON)<textarea name="server_urls" rows="5" placeholder='{"SUB":{"ENMA-1":"https://your-domain/sub1.m3u8","ENMA-2":"https://your-domain/sub2.m3u8"},"DUB":{"ENMA-1":"https://your-domain/dub1.mp4"},"HSUB":{"ENMA-1":"https://your-domain/hsub1.mp4"}}'></textarea></label><p class="server-json-help">Add only streams you own or are licensed to distribute. Supported groups: SUB, DUB, HSUB; servers: ENMA-1 to ENMA-5. Missing server URLs fall back to the default episode URL.</p><label class="check-label"><input type="checkbox" name="featured"> Set as featured on homepage</label><button class="btn primary full">Save anime</button></form><p class="muted">Only add video links you own or have permission to stream.</p></div></main>{% endblock %}
+<!-- Hindi Server Link -->
+<div class="mb-3">
+    <label for="hindi_url" class="form-label text-white">IN Hindi Server Link</label>
+    <input type="url" 
+           class="form-control" 
+           id="hindi_url" 
+           name="hindi_url" 
+           placeholder="https://... (Embed Link)" 
+           value="{{ anime.hindi_url if anime else '' }}" 
+           required>
+</div>
+
+<!-- English Server Link -->
+<div class="mb-3">
+    <label for="english_url" class="form-label text-white">GB English Server Link</label>
+    <input type="url" 
+           class="form-control" 
+           id="english_url" 
+           name="english_url" 
+           placeholder="https://... (Embed Link)" 
+           value="{{ anime.english_url if anime else '' }}" 
+           required>
+</div>
