@@ -81,14 +81,18 @@ def parse_server_urls(raw):
         if not isinstance(value, dict):
             return {}
         clean = {}
+        # Accept both the simple Hindi/English format and grouped server mappings.
         for language in ("Hindi", "English"):
             raw_url = value.get(language, "")
             if isinstance(raw_url, str) and raw_url.strip().startswith(("https://", "http://")):
                 clean[language] = {language: raw_url.strip()}
             elif isinstance(raw_url, dict):
-                url = raw_url.get(language, "")
-                if isinstance(url, str) and url.strip().startswith(("https://", "http://")):
-                    clean[language] = {language: url.strip()}
+                servers = {}
+                for server, url in raw_url.items():
+                    if isinstance(server, str) and isinstance(url, str) and url.strip().startswith(("https://", "http://")):
+                        servers[server.strip()[:40]] = url.strip()
+                if servers:
+                    clean[language] = servers
         return clean
     except (json.JSONDecodeError, TypeError):
         return {}
@@ -269,6 +273,10 @@ def add_anime():
             anime_id = cur.lastrowid
             # Add an initial demo episode; replace the video URL with an authorized stream.
             server_urls = parse_server_urls(request.form.get("server_urls", ""))
+            hindi_embed = request.form.get("hindi_embed_url", "").strip()
+            english_embed = request.form.get("english_embed_url", "").strip()
+            if hindi_embed.startswith(("https://", "http://")): server_urls["Hindi"] = {"Hindi": hindi_embed}
+            if english_embed.startswith(("https://", "http://")): server_urls["English"] = {"English": english_embed}
             con.execute("INSERT INTO episodes(anime_id,episode_number,title,video_url,server_urls) VALUES(?,?,?,?,?)",
                         (anime_id,1,"Episode 1",request.form.get("video_url","").strip() or SAMPLE_VIDEO, json.dumps(server_urls)))
         flash("Anime added. Add more episodes from the admin panel.", "success")
@@ -286,13 +294,17 @@ def add_episode(anime_id):
     with db() as con:
         exists = con.execute("SELECT id FROM anime WHERE id=?", (anime_id,)).fetchone()
         if not exists: abort(404)
-        if number < 1 or not title or not video_url:
-            flash("Enter a valid episode number, title and video URL.", "error")
+        hindi_embed = request.form.get("hindi_embed_url", "").strip()
+        english_embed = request.form.get("english_embed_url", "").strip()
+        if number < 1 or not title or not (video_url or hindi_embed.startswith(("https://", "http://")) or english_embed.startswith(("https://", "http://"))):
+            flash("Enter an episode number and title, plus a default video URL or at least one embed URL.", "error")
         else:
             try:
                 server_urls = parse_server_urls(request.form.get("server_urls", ""))
+                if hindi_embed.startswith(("https://", "http://")): server_urls["Hindi"] = {"Hindi": hindi_embed}
+                if english_embed.startswith(("https://", "http://")): server_urls["English"] = {"English": english_embed}
                 con.execute("INSERT INTO episodes(anime_id,episode_number,title,video_url,server_urls) VALUES(?,?,?,?,?)",
-                            (anime_id,number,title,video_url,json.dumps(server_urls)))
+                            (anime_id,number,title,video_url or SAMPLE_VIDEO,json.dumps(server_urls)))
                 flash("Episode added.", "success")
             except sqlite3.IntegrityError:
                 flash("That episode number already exists for this anime.", "error")
